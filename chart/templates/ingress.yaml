@@ -1,33 +1,20 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: movies
+  name: rentals
   labels:
     {{- include "movies.labels" . | nindent 4 }}
   annotations:
     dev.okteto.com/generate-host: "true"
 spec:
   rules:
-    - http:
+    - host: movies-{{ .Release.Namespace }}.demo.okteto.dev
+      http:
         paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: frontend
-                port:
-                  number: 80
           - path: /rentals
             pathType: Prefix
             backend:
               service:
                 name: rentals
-                port:
-                  number: 8080
-          - path: /catalog
-            pathType: Prefix
-            backend:
-              service:
-                name: catalog
                 port:
                   number: 8080

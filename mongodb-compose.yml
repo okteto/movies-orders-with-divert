@@ -1,6 +1,6 @@
 services:
   init-rentals:
-    image: pepe
+    image: ${OKTETO_BUILD_RENTALS_IMAGE}
     command: yarn load
     environment:
       - MONGODB_USERNAME=okteto
