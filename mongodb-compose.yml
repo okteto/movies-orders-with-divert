@@ -1,19 +1,18 @@
-name: movies
 services:
-  init:
-    image: okteto.dev/api:${OKTETO_GIT_COMMIT}
+  init-rentals:
+    image: pepe
     command: yarn load
     environment:
       - MONGODB_USERNAME=okteto
       - MONGODB_PASSWORD=mongodb123
       - MONGODB_DATABASE=okteto
-      - MONGODB_HOST=mongodb
+      - MONGODB_HOST=mongodb-rentals
     restart: never
     depends_on:
-      mongodb:
+      mongodb-rentals:
         condition: service_healthy
 
-  mongodb:
+  mongodb-rentals:
     image: docker.io/bitnami/mongodb:4.0.12-debian-9-r43
     environment:
       - MONGODB_USERNAME=okteto
@@ -27,7 +26,7 @@ services:
     ports:
       - 27017
     volumes:
-      - data:/bitnami/mongodb
+      - data-rentals:/bitnami/mongodb
 
 volumes:
-  data:
+  data-rentals:

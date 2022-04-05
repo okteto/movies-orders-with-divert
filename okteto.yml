@@ -1,7 +1,20 @@
-name: api
-command: bash
-sync:
-  - .:/src
-forward:
-  - 9229:9229
-  - 27017:mongodb:27017
+name: rentals
+icon: https://apps.okteto.com/movies/icon.png
+
+dependencies:
+  - https://github.com/okteto/movies-frontend-with-divert
+  - https://github.com/okteto/movies-catalog
+
+build:
+  rentals:
+    context: .
+
+deploy:
+  - okteto deploy -f mongodb-compose.yml
+  - helm upgrade --install rentals chart --set image=${OKTETO_BUILD_RENTALS_IMAGE}
+
+dev:
+  rentals:
+    command: yarn start
+    sync:
+      - .:/src

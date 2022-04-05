@@ -17,10 +17,17 @@ spec:
                 name: frontend
                 port:
                   number: 80
-          - path: /api
+          - path: /rentals
             pathType: Prefix
             backend:
               service:
-                name: api
+                name: rentals
+                port:
+                  number: 8080
+          - path: /catalog
+            pathType: Prefix
+            backend:
+              service:
+                name: catalog
                 port:
                   number: 8080
