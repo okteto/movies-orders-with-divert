@@ -45,6 +45,22 @@ async function getRentals(db) {
   });
 }
 
+async function getExpandedRentals(db) {
+  const rentals = await getRentals(db);
+  const catalog = await getCatalog();
+  const extended = rentals.map(rental => {
+    const movie = catalog.find(m => m.id === rental.catalog_id);
+    return movie ? {
+      ...rental,
+      vote_average: movie.vote_average,
+      original_title: movie.original_title,
+      backdrop_path: movie.backdrop_path,
+      overview: movie.overview
+    } : null;
+  }).filter(Boolean);
+  return extended;
+}
+
 function startWithRetry() {
   mongo.connect(url, {
     useUnifiedTopology: true,
@@ -61,30 +77,19 @@ function startWithRetry() {
     const db = client.db(process.env.MONGODB_DATABASE);
 
     app.listen(8080, () => {
-      app.get('/rentals/healthz', (req, res, next) => {
+      app.get('/rentals/healthz', (_, res) => {
         res.sendStatus(200)
         return;
       });
 
-      app.get('/rentals', async (req, res, next) => {
+      app.get('/rentals', async (_, res) => {
         console.log('GET /rentals');
 
-        const rentals = await getRentals(db);
-        const catalog = await getCatalog();
-        const rentalsExtended = rentals.map(rental => {
-          const movie = catalog.find(m => m.id === rental.catalog_id);
-          return movie ? {
-            ...rental,
-            vote_average: movie.vote_average,
-            original_title: movie.original_title,
-            backdrop_path: movie.backdrop_path,
-            overview: movie.overview
-          } : null;
-        }).filter(Boolean);
-        res.json(rentalsExtended);
+        const rentals = await getExpandedRentals(db);
+        res.json(rentals);
       });
 
-      app.post('/rent', async (req, res, next) => {
+      app.post('/rent', async (req, res) => {
         console.log(`POST /rent`);
 
         const rent = {
@@ -96,7 +101,7 @@ function startWithRetry() {
 
         try {
           await db.collection('rentals').updateOne(
-            { '_id': rent._id },
+            { _id: rent._id },
             { $set: rent },
             { upsert: true }
           );
