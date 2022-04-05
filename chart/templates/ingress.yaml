@@ -4,8 +4,6 @@ metadata:
   name: rentals
   labels:
     {{- include "movies.labels" . | nindent 4 }}
-  annotations:
-    dev.okteto.com/generate-host: "true"
 spec:
   rules:
     - host: movies-{{ .Release.Namespace }}.demo.okteto.dev
