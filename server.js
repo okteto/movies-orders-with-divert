@@ -93,8 +93,8 @@ function startWithRetry() {
         console.log(`POST /rent`);
 
         const rent = {
-          _id: req.body?.id,
-          id: req.body?.id,
+          _id: req.body?.catalog_id,
+          id: req.body?.catalog_id,
           price: req.body?.price,
           catalog_id: req.body?.catalog_id
         };
