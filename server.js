@@ -33,6 +33,18 @@ async function getCatalog() {
   });
 }
 
+async function getRentals(db) {
+  return new Promise(done => {
+    db.collection('rentals').find().toArray(async (error, rentals) => {
+      if (error) {
+        console.error(`Failed to query rentals: ${error}`)
+        done([]);
+      }
+      done(rentals);
+    });
+  });
+}
+
 function startWithRetry() {
   mongo.connect(url, {
     useUnifiedTopology: true,
@@ -56,36 +68,38 @@ function startWithRetry() {
 
       app.get('/rentals', async (req, res, next) => {
         console.log('GET /rentals');
-        db.collection('rentals').find().toArray(async (error, rentals) => {
-          if (error) {
-            console.log(`Failed to query rentals: ${error}`)
-            res.json([]);
-            return;
-          }
-          const catalog = await getCatalog();
-          const rentalsExtended = rentals.map(rental => {
-            const movie = catalog.find(m => m.id === rental.catalog_id);
-            return movie ? {
-              ...rental,
-              vote_average: movie.vote_average,
-              original_title: movie.original_title,
-              backdrop_path: movie.backdrop_path,
-              overview: movie.overview
-            } : null;
-          }).filter(Boolean);
-          res.json(rentalsExtended);
-        });
+
+        const rentals = await getRentals(db);
+        const catalog = await getCatalog();
+        const rentalsExtended = rentals.map(rental => {
+          const movie = catalog.find(m => m.id === rental.catalog_id);
+          return movie ? {
+            ...rental,
+            vote_average: movie.vote_average,
+            original_title: movie.original_title,
+            backdrop_path: movie.backdrop_path,
+            overview: movie.overview
+          } : null;
+        }).filter(Boolean);
+        res.json(rentalsExtended);
       });
 
       app.post('/rent', async (req, res, next) => {
         console.log(`POST /rent`);
+
         const rent = {
           _id: req.body?.id,
+          id: req.body?.id,
           price: req.body?.price,
           catalog_id: req.body?.catalog_id
         };
+
         try {
-          await db.collection('rentals').insertOne(rent);
+          await db.collection('rentals').updateOne(
+            { '_id': rent._id },
+            { $set: rent },
+            { upsert: true }
+          );
         } catch(err) {
           console.log(`Failed to rent: ${err}`);
         }

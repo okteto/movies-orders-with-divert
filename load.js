@@ -13,13 +13,12 @@ var insert = function(collection, data, resolve, reject) {
         return reject(err);
       }
     }
-
     resolve();
   });
 }
 
 function loadWithRetry() {
-  mongo.connect(url, { 
+  mongo.connect(url, {
     useUnifiedTopology: true,
     useNewUrlParser: true,
     connectTimeoutMS: 300,
@@ -33,20 +32,20 @@ function loadWithRetry() {
 
     var promises = [];
     db = client.db(process.env.MONGODB_DATABASE);
-  
+
     promises.push(new Promise((resolve, reject)=>{
       insert(db.collection('rentals'), "./data/rentals.json", resolve, reject);
     }));
-  
+
     Promise.all(promises)
-    .then(function() { 
-      console.log('all loaded'); 
+    .then(function() {
+      console.log('all loaded');
       process.exit(0);
     })
     .catch((err) => {
       console.error(`fail to load: ${err}`);
       process.exit(1);
-    });      
+    });
   });
 };
 
