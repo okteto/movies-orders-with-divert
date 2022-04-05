@@ -1,14 +1,40 @@
-const { json } = require("express");
-const express = require("express");
-const mongo = require("mongodb").MongoClient;
-const http = require("http");
+const { json } = require('express');
+const express = require('express');
+const mongo = require('mongodb').MongoClient;
+const http = require('http');
 
 const app = express();
+app.use(express.json());
 
 const url = `mongodb://${process.env.MONGODB_USERNAME}:${encodeURIComponent(process.env.MONGODB_PASSWORD)}@${process.env.MONGODB_HOST}:27017/${process.env.MONGODB_DATABASE}`;
 
+async function getCatalog() {
+  return new Promise(done => {
+    const req = http.request({
+      hostname: 'catalog',
+      path: '/catalog',
+      port: '8080',
+      method: 'GET'
+    }, res => {
+      let body = '';
+      res.on('data', (chunk) => body += chunk);
+      res.on('end', () => {
+        const response = JSON.parse(body);
+        done(response);
+      });
+    });
+
+    req.on('error', error => {
+      console.error(`Failed to get movies catalog: ${error}`);
+      done([]);
+    });
+
+    req.end();
+  });
+}
+
 function startWithRetry() {
-  mongo.connect(url, { 
+  mongo.connect(url, {
     useUnifiedTopology: true,
     useNewUrlParser: true,
     connectTimeoutMS: 1000,
@@ -23,77 +49,50 @@ function startWithRetry() {
     const db = client.db(process.env.MONGODB_DATABASE);
 
     app.listen(8080, () => {
-      app.get("/rentals/healthz", (req, res, next) => {
+      app.get('/rentals/healthz', (req, res, next) => {
         res.sendStatus(200)
         return;
       });
 
-      app.get("/rentals", (req, res, next) => {
-        console.log(`GET /rentals`)
-        db.collection('rentals').find().toArray( (err, results) =>{
-          if (err){
-            console.log(`failed to query rentals: ${err}`)
+      app.get('/rentals', async (req, res, next) => {
+        console.log('GET /rentals');
+        db.collection('rentals').find().toArray(async (error, rentals) => {
+          if (error) {
+            console.log(`Failed to query rentals: ${error}`)
             res.json([]);
             return;
           }
-
-          var options = {
-            hostname: 'catalog',
-            path: '/catalog',
-            port: '8080',
-            json: true
-          };
-
-          console.log("RAMON!")
-
-          http.get(options, (res) => {
-            res.on('data', data => {
-              console.log(data);
-            })
-          })
-
-
-          // http.request(options, function(error, response, body){
-          //   console.log(response);
-          // });
-          //   res.on('data', data => {
-          //     results.forEach((rental) => {
-          //       if (rental.catalog_id == chunk.id) {
-          //         rental.vote_average = chunk.vote_average;
-          //         rental.original_title = chunk.original_title;
-          //         rental.backdrop_path = chunk.backdrop_path;
-          //         rental.overview = chunk.overview;
-          //       }
-          //       }
-          //     });
-          //   })
-
-          // req.on('error', error => {
-          //   console.error(error)
-          // })
-
-          // req.end()
-
-
-          res.json(results);
+          const catalog = await getCatalog();
+          const rentalsExtended = rentals.map(rental => {
+            const movie = catalog.find(m => m.id === rental.catalog_id);
+            return movie ? {
+              ...rental,
+              vote_average: movie.vote_average,
+              original_title: movie.original_title,
+              backdrop_path: movie.backdrop_path,
+              overview: movie.overview
+            } : null;
+          }).filter(Boolean);
+          res.json(rentalsExtended);
         });
       });
 
-      app.post("/rent", (req, res, next) => {
-        console.log(`POST /rent`)
-        var rent = { price: req.body["price"], catalog_id: req.body["catalog_id"] };
-        db.collection('rentals').insertOne(rent).toArray( (err, results) =>{
-          if (err){
-            console.log(`failed to rent: ${err}`)
-            res.json([]);
-            return;
-          }
-
-          res.json(results);
-        });
+      app.post('/rent', async (req, res, next) => {
+        console.log(`POST /rent`);
+        const rent = {
+          _id: req.body?.id,
+          price: req.body?.price,
+          catalog_id: req.body?.catalog_id
+        };
+        try {
+          await db.collection('rentals').insertOne(rent);
+        } catch(err) {
+          console.log(`Failed to rent: ${err}`);
+        }
+        res.json([]);
       });
 
-      console.log("Server running on port 8080.");
+      console.log('Server running on port 8080.');
     });
   });
 };
