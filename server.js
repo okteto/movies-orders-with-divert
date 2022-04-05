@@ -1,5 +1,7 @@
+const { json } = require("express");
 const express = require("express");
 const mongo = require("mongodb").MongoClient;
+const http = require("http");
 
 const app = express();
 
@@ -31,6 +33,58 @@ function startWithRetry() {
         db.collection('rentals').find().toArray( (err, results) =>{
           if (err){
             console.log(`failed to query rentals: ${err}`)
+            res.json([]);
+            return;
+          }
+
+          var options = {
+            hostname: 'catalog',
+            path: '/catalog',
+            port: '8080',
+            json: true
+          };
+
+          console.log("RAMON!")
+
+          http.get(options, (res) => {
+            res.on('data', data => {
+              console.log(data);
+            })
+          })
+
+
+          // http.request(options, function(error, response, body){
+          //   console.log(response);
+          // });
+          //   res.on('data', data => {
+          //     results.forEach((rental) => {
+          //       if (rental.catalog_id == chunk.id) {
+          //         rental.vote_average = chunk.vote_average;
+          //         rental.original_title = chunk.original_title;
+          //         rental.backdrop_path = chunk.backdrop_path;
+          //         rental.overview = chunk.overview;
+          //       }
+          //       }
+          //     });
+          //   })
+
+          // req.on('error', error => {
+          //   console.error(error)
+          // })
+
+          // req.end()
+
+
+          res.json(results);
+        });
+      });
+
+      app.post("/rent", (req, res, next) => {
+        console.log(`POST /rent`)
+        var rent = { price: req.body["price"], catalog_id: req.body["catalog_id"] };
+        db.collection('rentals').insertOne(rent).toArray( (err, results) =>{
+          if (err){
+            console.log(`failed to rent: ${err}`)
             res.json([]);
             return;
           }

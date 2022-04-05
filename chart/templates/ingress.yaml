@@ -11,6 +11,13 @@ spec:
     - host: movies-{{ .Release.Namespace }}.demo.okteto.dev
       http:
         paths:
+          - path: /rent
+            pathType: Prefix
+            backend:
+              service:
+                name: rentals
+                port:
+                  number: 8080
           - path: /rentals
             pathType: Prefix
             backend:
