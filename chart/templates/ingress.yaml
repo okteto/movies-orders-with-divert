@@ -4,10 +4,11 @@ metadata:
   name: rentals
   labels:
     {{- include "movies.labels" . | nindent 4 }}
+  annotations:
+    dev.okteto.com/generate-host: "movies"
 spec:
   rules:
-    - host: movies-{{ .Release.Namespace }}.demo.okteto.dev
-      http:
+    - http:
         paths:
           - path: /rent
             pathType: Prefix
@@ -23,6 +24,3 @@ spec:
                 name: rentals
                 port:
                   number: 8080
-  tls:
-  - hosts:
-    - movies-{{ .Release.Namespace }}.demo.okteto.dev
