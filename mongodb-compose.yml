@@ -30,3 +30,6 @@ services:
 
 volumes:
   data-rentals:
+    labels:
+      dev.okteto.com/from-pvc: data-rentals
+      dev.okteto.com/from-namespace: staging

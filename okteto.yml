@@ -1,9 +1,5 @@
 icon: https://apps.okteto.com/movies/icon.png
 
-dependencies:
-  - https://github.com/okteto/movies-frontend-with-divert
-  - https://github.com/okteto/movies-catalog
-
 build:
   rentals:
     context: .
