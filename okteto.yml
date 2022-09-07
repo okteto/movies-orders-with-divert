@@ -5,11 +5,18 @@ build:
     context: .
 
 deploy:
-  - okteto deploy -f mongodb-compose.yml
-  - helm upgrade --install rentals chart --set image=${OKTETO_BUILD_RENTALS_IMAGE}
+  compose: mongodb-compose.yml
+  commands:
+    - helm upgrade --install rentals chart --set image=${OKTETO_BUILD_RENTALS_IMAGE}
+  divert:
+    namespace: staging
+    service: rentals
+    deployment: rentals
 
 dev:
   rentals:
     command: yarn start
     sync:
       - .:/src
+    forward:
+      - 9229:9229

@@ -52,6 +52,7 @@ async function getExpandedRentals(db) {
     const movie = catalog.find(m => m.id === rental.catalog_id);
     return movie ? {
       ...rental,
+      price: 1 * movie.price,
       vote_average: movie.vote_average,
       original_title: movie.original_title,
       backdrop_path: movie.backdrop_path,
