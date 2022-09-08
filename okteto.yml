@@ -5,8 +5,8 @@ build:
     context: .
 
 deploy:
-  compose: mongodb-compose.yml
   commands:
+    - okteto deploy -f mongodb-compose.yml
     - helm upgrade --install rentals chart --set image=${OKTETO_BUILD_RENTALS_IMAGE}
   divert:
     namespace: staging
