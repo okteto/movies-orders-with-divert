@@ -10,8 +10,6 @@ deploy:
     - helm upgrade --install rentals chart --set image=${OKTETO_BUILD_RENTALS_IMAGE}
   divert:
     namespace: staging
-    service: rentals
-    deployment: rentals
 
 dev:
   rentals:
