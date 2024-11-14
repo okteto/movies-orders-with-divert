@@ -6,6 +6,7 @@ metadata:
     {{- include "movies.labels" . | nindent 4 }}
   annotations:
     dev.okteto.com/generate-host: "movies"
+    dev.okteto.com/endpoints: https://movies-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN},https://movies-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN}/catalog,https://movies-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN}/rentals
 spec:
   rules:
     - http:
